@@ -11,7 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 )
 
@@ -335,7 +335,8 @@ func decodeFile(filename string) {
 		return
 	}
 	success = true
-	if err := os.Rename(toFilename, path.Join(path.Dir(filename), neoRd.NeoHeader.OriginalFilename)); err != nil {
+	originPath := filepath.Join(filepath.Dir(filename), neoRd.NeoHeader.OriginalFilename)
+	if err := os.Rename(toFilename, originPath); err != nil {
 		log.Printf("重命名文件 %s 失败", filename)
 	}
 }
@@ -352,14 +353,14 @@ func encodeFile(filename string) {
 		return
 	}
 	defer fromFd.Close()
-	toFilename := path.Join(path.Dir(filename), RandStringRunes(8)+".neo")
+	toFilename := filepath.Join(filepath.Dir(filename), RandStringRunes(8)+".neo")
 	toFd, err := os.OpenFile(toFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
 		log.Printf("无法打开文件：%s，错误：%v", filename, err)
 		return
 	}
 	defer toFd.Close()
-	w := NewNeoWriter(toFd, 8, path.Base(filename), crc32_)
+	w := NewNeoWriter(toFd, 8, filepath.Base(filename), crc32_)
 	if _, err := io.Copy(w, fromFd); err != nil {
 		log.Printf("写入文件：%s，错误：%v", toFilename, err)
 		return
